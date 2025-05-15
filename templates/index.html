@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CryptoMixer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-gray-800">
+  <div class="min-h-screen flex flex-col items-center justify-center px-4">
+    <h1 class="text-4xl font-bold text-center mb-4 text-indigo-600">CryptoMixer</h1>
+
+    {% if username %}
+      <p class="mb-4 text-gray-600">Вы вошли как <strong>{{ username }}</strong> | 
+        <a href="{{ url_for('logout') }}" class="logout-link text-indigo-600 hover:underline">Выйти</a>
+      </p>
+    {% endif %}
+
+    <!-- Навигация -->
+    <div class="flex space-x-4 mb-6">
+      <button class="tab-button px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700" data-target="mixer-form">Миксер</button>
+
+      {% if username %}
+        <button class="tab-button px-4 py-2 rounded-lg hover:bg-indigo-100" data-target="profile-tab">{{ username }}</button>
+      {% else %}
+        <button class="tab-button px-4 py-2 rounded-lg hover:bg-indigo-100" data-target="login-form">Вход</button>
+      {% endif %}
+    </div>
+
+    <!-- Миксер -->
+    <form id="mixer-form" method="POST" class="tab-content bg-gray-50 shadow-md rounded-2xl p-6 w-full max-w-md space-y-4">
+      <div class="relative">
+        <label class="block text-sm font-medium mb-1">Сумма и валюта</label>
+        <div class="flex border rounded-lg overflow-hidden">
+          <input type="number" name="amount" step="any" placeholder="0.00" required class="flex-1 p-2 pl-3 focus:outline-none" />
+          <input type="hidden" name="coin" id="selected-coin" value="btc">
+          <button type="button" id="currency-toggle" class="flex items-center px-3 bg-gray-100 hover:bg-gray-200 border-l">
+            <img id="currency-icon" src="/static/icons/bitcoin.png" alt="BTC" class="w-5 h-5 mr-1" />
+            <span id="currency-label">BTC</span>
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Выпадающее меню -->
+        <div id="currency-menu" class="hidden absolute top-full right-0 mt-1 w-full bg-white border rounded-lg shadow-lg z-50">
+          <div class="cursor-pointer hover:bg-gray-100 px-4 py-2 flex items-center truncate" onclick="setCurrency('btc')">
+            <img src="/static/icons/bitcoin.png" class="w-5 h-5 mr-2" /> BTC (Bitcoin)
+          </div>
+          <div class="cursor-pointer hover:bg-gray-100 px-4 py-2 flex items-center truncate" onclick="setCurrency('eth')">
+            <img src="/static/icons/ethereum.png" class="w-5 h-5 mr-2" /> ETH (Ethereum)
+          </div>
+          <div class="cursor-pointer hover:bg-gray-100 px-4 py-2 flex items-center truncate" onclick="setCurrency('usdt')">
+            <img src="/static/icons/usdt.png" class="w-5 h-5 mr-2" /> USDT (Tether)
+          </div>
+        </div>
+      </div>
+      <div>
+        <label for="address" class="block text-sm font-medium">Ваш адрес для получения</label>
+        <input type="text" name="address" id="address" required class="mt-1 w-full p-2 border rounded-lg" placeholder="Введите адрес кошелька" />
+      </div>
+      <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+        Начать микширование
+      </button>
+    </form>
+
+    <!-- Вход -->
+    <form id="login-form" action="{{ url_for('auth') }}" method="POST" class="tab-content hidden bg-gray-50 shadow-md rounded-2xl p-6 w-full max-w-md space-y-4">
+      <input type="hidden" name="action" value="login">
+      <div>
+        <label for="username" class="block text-sm font-medium">Логин</label>
+        <input type="text" id="username" name="username" class="mt-1 w-full p-2 border rounded-lg" required />
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium">Пароль</label>
+        <input type="password" id="password" name="password" class="mt-1 w-full p-2 border rounded-lg" required />
+      </div>
+      {% if error %}
+        <p class="text-red-500 text-sm">{{ error }}</p>
+      {% endif %}
+      <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+        Войти
+      </button>
+      <p class="text-sm text-center mt-2 text-gray-500">
+        Нет пароля? <a href="#" onclick="toggleRegister()" class="text-indigo-600 hover:underline">Зарегистрируйтесь</a>
+      </p>
+    </form>
+
+    <!-- Регистрация -->
+    <form id="register-form" action="{{ url_for('auth') }}" method="POST" class="tab-content hidden bg-gray-50 shadow-md rounded-2xl p-6 w-full max-w-md space-y-4">
+      <input type="hidden" name="action" value="register">
+      <div>
+        <label for="reg-username" class="block text-sm font-medium">Логин</label>
+        <input type="text" id="reg-username" name="username" class="mt-1 w-full p-2 border rounded-lg" required />
+      </div>
+      <div>
+        <label for="reg-password" class="block text-sm font-medium">Пароль</label>
+        <input type="password" id="reg-password" name="password" class="mt-1 w-full p-2 border rounded-lg" required />
+      </div>
+      <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+        Зарегистрироваться
+      </button>
+    </form>
+
+    <!-- Профиль -->
+    <div id="profile-tab" class="tab-content hidden bg-gray-50 shadow-md rounded-2xl p-6 w-full max-w-xl space-y-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-semibold text-indigo-700">Добро пожаловать, {{ username }}</h2>
+        <a href="{{ url_for('logout') }}" class="logout-link text-sm text-red-500 hover:underline">Выйти</a>
+      </div>
+
+      <!-- Дата регистрации -->
+      <div class="text-sm text-gray-500">
+        Аккаунт создан: {{ registered_at if registered_at else "неизвестно" }}
+      </div>
+
+      <!-- История операций -->
+      <div>
+        <h3 class="text-lg font-semibold text-gray-700 mb-2">История операций</h3>
+        {% if operations %}
+          <div class="space-y-3">
+            {% for op in operations %}
+              <div class="bg-white border rounded-lg p-4 shadow-sm">
+                <div class="flex justify-between text-sm text-gray-600">
+                  <div><strong>Сумма:</strong> {{ op.amount }} {{ op.coin|upper }}</div>
+                  <div><strong>Дата:</strong> {{ op.timestamp }}</div>
+                </div>
+                <div class="text-gray-500 text-sm mt-1">
+                  Адрес: {{ op.address }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="bg-white p-4 rounded-lg border text-center text-sm text-gray-500">
+            История операций пока пуста 🕊️
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Кнопка и форма смены пароля -->
+      <div>
+        <button id="toggle-password-form" type="button" class="w-full bg-indigo-100 text-indigo-700 py-2 rounded-lg hover:bg-indigo-200 transition">
+          🔐 Сменить пароль
+        </button>
+
+        <form id="password-form" method="POST" action="{{ url_for('change_password') }}" class="space-y-3 mt-4 hidden">
+          <input type="password" name="current_password" required placeholder="Текущий пароль" class="w-full p-2 border rounded-lg" />
+          <input type="password" name="new_password" required placeholder="Новый пароль" class="w-full p-2 border rounded-lg" />
+          <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
+            Обновить пароль
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="mt-10 text-sm text-gray-500">
+      © 2025 CryptoMixer. Полная анонимность. Без логов.
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Обработка всех кнопок выхода
+        document.querySelectorAll('.logout-link').forEach(logoutLink => {
+            logoutLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    const response = await fetch('/logout', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        console.error('Ошибка при выходе');
+                    }
+                } catch (error) {
+                    console.error('Ошибка сети:', error);
+                }
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Обработчик переключения вкладок
+        const tabs = document.querySelectorAll(".tab-button");
+        const contents = document.querySelectorAll(".tab-content");
+        
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                // Удаляем активные классы у всех кнопок
+                tabs.forEach(t => t.classList.remove("bg-indigo-100", "text-indigo-700"));
+                // Добавляем активные классы текущей кнопке
+                tab.classList.add("bg-indigo-100", "text-indigo-700");
+                
+                // Скрываем все содержимое вкладок
+                contents.forEach(c => c.classList.add("hidden"));
+                // Показываем целевую вкладку
+                document.getElementById(tab.dataset.target).classList.remove("hidden");
+            });
+        });
+
+        // Обработчик выбора валюты
+        const currencyToggle = document.getElementById('currency-toggle');
+        const currencyMenu = document.getElementById('currency-menu');
+        
+        if (currencyToggle && currencyMenu) {
+            currencyToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currencyMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!currencyToggle.contains(e.target) && !currencyMenu.contains(e.target)) {
+                    currencyMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        window.setCurrency = function(coin) {
+            const icons = {
+                btc: '/static/icons/bitcoin.png',
+                eth: '/static/icons/ethereum.png',
+                usdt: '/static/icons/usdt.png'
+            };
+            document.getElementById('currency-label').textContent = coin.toUpperCase();
+            document.getElementById('currency-icon').src = icons[coin];
+            document.getElementById('selected-coin').value = coin;
+            currencyMenu.classList.add('hidden');
+        };
+
+        // Общая обработка форм
+        const handleForm = async (form, url, successCallback) => {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    if (successCallback) successCallback(result);
+                } else {
+                    showError(form, result.message);
+                }
+            } catch (error) {
+                showError(form, 'Ошибка соединения');
+                console.error('Ошибка:', error);
+            }
+        };
+
+        const showError = (form, message) => {
+            let errorContainer = form.querySelector('.error-message');
+            if (!errorContainer) {
+                errorContainer = document.createElement('div');
+                errorContainer.className = 'error-message text-red-500 text-sm mt-2';
+                form.prepend(errorContainer);
+            }
+            errorContainer.textContent = message;
+        };
+
+        // Обработка форм
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const url = form.id === 'password-form' 
+                    ? '/change_password' 
+                    : form.id === 'mixer-form' 
+                        ? '/mix' 
+                        : '/auth';
+                
+                await handleForm(form, url, (result) => {
+                    if (result.status === 'success') {
+                        if (form.id === 'login-form' || form.id === 'register-form') {
+                            window.location.reload();
+                        } else if (form.id === 'mixer-form') {
+                            form.reset();
+                            alert('Операция успешно запущена!');
+                        }
+                    }
+                });
+            });
+        });
+
+        // Обработка выхода
+        document.querySelector('a[href="{{ url_for("logout") }}"]')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.reload();
+            } catch (error) {
+                console.error('Ошибка при выходе:', error);
+            }
+        });
+
+        // Переключение формы регистрации
+        window.toggleRegister = function() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.querySelector('[data-target="login-form"]').classList.remove('bg-indigo-100', 'text-indigo-700');
+        };
+
+        // Обработчик смены пароля
+        document.getElementById('toggle-password-form')?.addEventListener('click', () => {
+            const form = document.getElementById('password-form');
+            form.classList.toggle('hidden');
+        });
+    });
+  </script>
+</body>
+</html>
