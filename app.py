@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, redirect, render_template, request, session, jsonify, url_for
 from datetime import datetime
 import sqlite3
 import hashlib
@@ -7,6 +7,45 @@ import os
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.config['DATABASE'] = 'cryptomixer.db'
+
+# Конфигурация комиссий
+COMMISSION_CONFIG = {
+    'btc': {
+        'gas_fee': 0.00015,
+        'service_fee_percent': 0.05,
+        'currency': 'BTC'
+    },
+    'eth': {
+        'gas_fee': 0.0012,
+        'service_fee_percent': 0.05,
+        'currency': 'ETH'
+    },
+    'usdt': {
+        'gas_fee': 0.47,
+        'service_fee_percent': 0.03,
+        'currency': 'USDT'
+    }
+}
+
+DEPOSIT_ADDRESSES = {
+    'btc': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+    'eth': '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+    'usdt': 'TYmqbc1qQyWQqywZ8rVkoQkFCxQkGrnW48'
+}
+
+def calculate_commission(coin, amount=None):
+    config = COMMISSION_CONFIG.get(coin.lower(), {})
+    
+    gas_fee = config.get('gas_fee', 0)
+    service_fee = amount * config.get('service_fee_percent', 0) if amount else 0
+    total = gas_fee + service_fee
+    
+    return {
+        'gas_fee': round(gas_fee, 6),
+        'service_fee': round(service_fee, 6),
+        'total': round(total, 6),
+        'currency': config.get('currency', 'USD')
+    }
 
 def init_db():
     with app.app_context():
@@ -22,6 +61,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             amount REAL,
+            original_amount REAL,
             coin TEXT,
             address TEXT,
             timestamp DATETIME,
@@ -131,30 +171,64 @@ def change_password():
     
     return jsonify(response)
 
+@app.route('/payment')
+def payment():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    
+    operation_id = request.args.get('operation_id')
+    if not operation_id:
+        return redirect(url_for('index'))
+    
+    db = get_db()
+    operation = db.execute('''SELECT * FROM operations 
+                            WHERE id = ? AND user_id = ?''',
+                         (operation_id, session['user_id'])).fetchone()
+    
+    if not operation:
+        return redirect(url_for('index'))
+    
+    deposit_address = DEPOSIT_ADDRESSES.get(operation['coin'].lower(), '')
+    
+    return render_template('payment.html',
+                         amount=operation['amount'],
+                         original_amount=operation['original_amount'],
+                         coin=operation['coin'].upper(),
+                         deposit_address=deposit_address)
+
 @app.route('/mix', methods=['POST'])
 def mix():
     if 'user_id' not in session:
         return jsonify({'status': 'error', 'message': 'Требуется авторизация'}), 401
     
     try:
-        # Получаем данные из JSON
         data = request.get_json()
-        amount = float(data['amount'])
+        original_amount = float(data['amount'])
         coin = data['coin']
         address = data['address']
         
-        if amount <= 0:
+        if original_amount <= 0:
             return jsonify({'status': 'error', 'message': 'Сумма должна быть больше нуля'}), 400
         
-        # Сохраняем операцию в БД
+        # Расчет комиссии
+        commission = calculate_commission(coin, original_amount)
+        total_amount = original_amount + commission['total']
+        
         db = get_db()
-        db.execute('''INSERT INTO operations 
-                   (user_id, amount, coin, address, timestamp)
-                   VALUES (?, ?, ?, ?, ?)''',
-                (session['user_id'], amount, coin, address, datetime.now().strftime('%Y-%m-%d %H:%M')))
+        cursor = db.execute('''INSERT INTO operations 
+                   (user_id, amount, original_amount, coin, address, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?)''',
+                (session['user_id'], total_amount, original_amount, coin, 
+                 address, datetime.now().strftime('%Y-%m-%d %H:%M')))
+        operation_id = cursor.lastrowid
         db.commit()
         
-        return jsonify({'status': 'success', 'message': 'Операция успешно запущена'})
+        return jsonify({
+            'status': 'success',
+            'operation_id': operation_id,
+            'commission': commission,
+            'total_amount': total_amount
+        })
         
     except (KeyError, ValueError, TypeError) as e:
         app.logger.error(f"Ошибка в данных: {str(e)}")
@@ -162,6 +236,14 @@ def mix():
     except Exception as e:
         app.logger.error(f"Ошибка сервера: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Внутренняя ошибка сервера'}), 500
+
+@app.route('/api/commission', methods=['GET'])
+def get_commission():
+    coin = request.args.get('coin', 'btc')
+    amount = float(request.args.get('amount', 1.0))
+    
+    commission = calculate_commission(coin, amount)
+    return jsonify(commission)
 
 if __name__ == '__main__':
     app.run(debug=True)
