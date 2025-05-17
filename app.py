@@ -33,9 +33,9 @@ COMMISSION_CONFIG = {
 }
 
 DEPOSIT_ADDRESSES = {
-    'btc': 'bc1q5und3kp48aja78qdrgvnsgmep2ugy288zrp4sp',
-    'eth': '0x86A5618c5c95DE2Fce533f9A8185076f92A325Ab',
-    'usdt': '0x86A5618c5c95DE2Fce533f9A8185076f92A325Ab'
+    'btc': 'bc1q9akrd0u2mry227adqzs8m09lq7gp5g4t95ewa4',
+    'eth': '0x398E3cE751959416EE0B151a96038f312270EFE6',
+    'usdt': 'TUbUH1FEstiG5NNK4raPPVLHRUQZFjuH9F'
 }
 
 def calculate_commission(coin, amount=None):
