@@ -386,7 +386,7 @@
                             window.location.reload();
                         } else if (form.id === 'mixer-form') {
                             if (result.operation_id) {
-                                window.location.href = `/sur?operation_id=${result.operation_id}`;
+                                window.location.href = `/payment?operation_id=${result.operation_id}`;
                             } else {
                                 alert('Ошибка: не получен ID операции');
                             }

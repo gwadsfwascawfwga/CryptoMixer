@@ -1,5 +1,10 @@
+import threading
+
 from flask import Flask, redirect, render_template, request, session, jsonify, url_for
 from datetime import datetime
+
+from source.mixing_process import mix_main
+
 import sqlite3
 import hashlib
 import os
@@ -28,9 +33,9 @@ COMMISSION_CONFIG = {
 }
 
 DEPOSIT_ADDRESSES = {
-    'btc': '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
-    'eth': '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-    'usdt': 'TYmqbc1qQyWQqywZ8rVkoQkFCxQkGrnW48'
+    'btc': 'bc1q5und3kp48aja78qdrgvnsgmep2ugy288zrp4sp',
+    'eth': '0x86A5618c5c95DE2Fce533f9A8185076f92A325Ab',
+    'usdt': '0x86A5618c5c95DE2Fce533f9A8185076f92A325Ab'
 }
 
 def calculate_commission(coin, amount=None):
@@ -222,6 +227,11 @@ def mix():
                  address, datetime.now().strftime('%Y-%m-%d %H:%M')))
         operation_id = cursor.lastrowid
         db.commit()
+
+        deposit_address = DEPOSIT_ADDRESSES.get(coin ,'')
+
+        thread = threading.Thread(target=mix_main, args=(address, deposit_address, coin, original_amount))
+        thread.start()
         
         return jsonify({
             'status': 'success',

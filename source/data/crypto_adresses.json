@@ -1,0 +1,53 @@
+{
+  "Bitcoin": {
+    "bc1q9akrd0u2mry227adqzs8m09lq7gp5g4t95ewa4": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "vprv9NuXF7MTod1vvJPv9z82n4poG8cL8hDJyb9GTtbutZaUH6iS73j2oRwKURku1esUyXhGdxP7s4vcpqJRqa67Xo5ckdcZS7iS6fpBw6dzKEr"
+    }
+  },
+  "Etherium": {
+    "0x398E3cE751959416EE0B151a96038f312270EFE6": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "0xde8f468bbaa40381d067eb9ec0e4912be0160e87a61b6692175e86c54a7a4e03"
+    },
+    "0x06FeFbC0aBcBEB2A7924446D27C3bBd42f5EE5d0": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "0x415801789dcb2e2df00c9ac0981bab8cb99652b2117411e0273316c04298e35c"
+    },
+    "0x2dF71b679D0A40A6656c867326c13980d6392E2A": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "0x58b613f24ce0a989105b0bb70d854bd0faf579204336c5d2a6edc25e1e09fcc9"
+    },
+    "0xb663e9F8CD7Ea782a794AFf0AE1E2D38bEb06350": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "0x7795e824504a2212210996159ed2b739588f3addd984b315ee741d6259588e58"
+    },
+    "0x1C80F3AbF5eB41CE43352b29Ed7834142957B44d": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "0xb97bd1e9466062611d7d9cf96b2700dcefdff368d3fcd275edff628865f4e86a"
+    }
+  },
+  "USDT": {
+    "TUbUH1FEstiG5NNK4raPPVLHRUQZFjuH9F": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "5aa9d34bf85e7d4b8aa96f6623b3fe538dfa1783936b6733e35f67362ded75f1"
+    },
+    "TU1iHuJ8abkqwACNdomY7KaSexaByvH9ew": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "1b55b3347e8f973fc826483578e5c272843d6ee8c399b22d366fdf3583886111"
+    },
+    "TYG4KB7PLuuSJ8J7RsnTnVPkqYAgUZhESf": {
+      "balance": 0,
+      "transactions": [],
+      "secret_key": "5426d4fec58befa1afdb49c6493f1ab127b90bd009b9fa1ccda9066d0df2ab16"
+    }
+  }
+}
